@@ -1,2 +1,2 @@
 from .participant import Participant
-from .exchangeList import ExchangeList
+from .exchange_list import ExchangeList
