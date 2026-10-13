@@ -1,19 +1,42 @@
-from ExchangeListGenerator import ExchangeList
-from ExchangeListGenerator import Participant
+from time import sleep
 
-p1 = Participant(1, 'Ana')
-p2 = Participant(2, 'Beto')
-p3 = Participant(3, 'Carlos')
-p4 = Participant(4, 'Diana')
-p5 = Participant(5, 'Elena')
+from ExchangeListGenerator import ExchangeList, send_email
 
-exchange_list = ExchangeList([p1, p2, p3, p4, p5])
+import logging
 
-p1.add_excluded_participant(p2)
-p3.add_excluded_participant(p2)
-p5.add_excluded_participants([p1, p2])
+logger = logging.getLogger(__name__)
 
-exchange_list.generate_pairs()
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s %(name)s:%(lineno)d - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
 
-for participant in exchange_list.participants:
-    print(f'{participant.name} comparte a {participant.matched_participant}')
+logging.basicConfig(level=logging.INFO)
+
+SEND_EMAIL = False
+
+try:
+    exchange_list = ExchangeList.from_file('intercambio_configuracion.txt')
+
+    exchange_list.generate_pairs()
+
+    with open('intercambio.txt', 'w') as file:
+        file.write(str(exchange_list.matched_participants))
+
+    with open('intercambio_readable.txt', 'w') as file:
+        for participant in exchange_list.matched_participants:
+            file.write(f'{participant.name} comparte a {participant.matched_participant}\n')
+
+    logging.info(f'Initial list {exchange_list.participants}')
+    logging.info(f'Final list: {exchange_list.matched_participants}')
+
+    if SEND_EMAIL:
+        logger.info('Sending emails...')
+
+        for participant in exchange_list.matched_participants:
+            send_email(participant)
+            sleep(30)
+
+except Exception as e:
+    logger.error(f'An error occurred: {e}')
